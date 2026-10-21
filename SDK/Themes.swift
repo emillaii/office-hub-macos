@@ -61,9 +61,11 @@ public struct HubButtonStyle: ButtonStyle {
             .font(.system(size: 12, weight: .semibold, design: .monospaced))
             .foregroundStyle(primary ? palette.background : palette.text)
             .padding(.horizontal, 13).padding(.vertical, 10)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
             .background(primary ? palette.accent.opacity(configuration.isPressed ? 0.7 : 1) : palette.panel.opacity(configuration.isPressed ? 0.5 : 1))
             .clipShape(RoundedRectangle(cornerRadius: 4))
-            .overlay(RoundedRectangle(cornerRadius: 4).stroke(primary ? palette.accent : palette.border, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 4).stroke(primary ? palette.accent : palette.border, lineWidth: 1).allowsHitTesting(false))
             .opacity(enabled ? 1 : 0.4)
     }
 }

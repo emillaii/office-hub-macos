@@ -100,7 +100,8 @@ struct HubView: View {
                 Text(title)
                 Spacer(minLength: 0)
                 if manager.enabled.contains(id) { Circle().fill(p.accent).frame(width: 4, height: 4) }
-            }.padding(.horizontal, 12).padding(.vertical, 13)
+            }.padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                .contentShape(Rectangle())
                 .foregroundStyle(manager.selected == id ? p.accent : p.muted)
                 .background(manager.selected == id ? p.panel : Color.clear, in: RoundedRectangle(cornerRadius: 4))
         }.buttonStyle(.plain).accessibilityLabel(title)

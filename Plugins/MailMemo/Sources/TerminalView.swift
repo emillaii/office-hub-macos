@@ -268,7 +268,7 @@ struct TerminalView: View {
                 }
                 Spacer(minLength: 0)
                 if item == theme { Text("*").foregroundStyle(p.accent).fontWeight(.bold) }
-            }.padding(11).frame(maxWidth: .infinity, alignment: .leading).background(p.inset, in: RoundedRectangle(cornerRadius: 4)).overlay(RoundedRectangle(cornerRadius: 4).stroke(item == theme ? p.accent : p.border))
+            }.padding(11).frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle()).background(p.inset, in: RoundedRectangle(cornerRadius: 4)).overlay(RoundedRectangle(cornerRadius: 4).stroke(item == theme ? p.accent : p.border))
         }.buttonStyle(.plain).accessibilityLabel(item.title + " theme").accessibilityValue(item == theme ? "Selected" : "Not selected")
     }
 
