@@ -52,8 +52,11 @@ only the tunnel and worker owned by this plugin.
 
 Summary, attention queue, Luna classification, read-only Mail collection,
 notifications, deduplication and Hong Kong scheduling are reused from Mail Memo.
-Open Preferences, add your existing Apple Mail addresses (one per line), save,
-then choose **Connect Apple Mail**. macOS will require Automation permission for
+Choose **Use Apple Mail accounts** to load addresses already configured in Apple
+Mail, then **Connect & check**. You can also enter addresses manually in
+Preferences. Account discovery reads account metadata only; the connection check
+reads inbox previews and creates a summary. Empty account lists keep checks paused
+and show a setup banner. macOS may require Automation permission for
 **Office Hub**, independently of the original Mail Memo permission. Notifications
 also require permission. Neither permission is bypassed or granted automatically.
 

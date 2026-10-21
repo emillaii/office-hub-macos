@@ -3,6 +3,35 @@ import AppKit
 import Network
 
 enum MailReader {
+    /// Account metadata only; no messages are read during setup.
+    static func discoverAccounts() throws -> [String] {
+        let source = """
+        tell application "Mail"
+            set addressesFound to {}
+            set accountList to get every account
+            repeat with mailAccount in accountList
+                set accountAddresses to get email addresses of mailAccount
+                repeat with addressValue in accountAddresses
+                    set end of addressesFound to (contents of addressValue)
+                end repeat
+            end repeat
+            return addressesFound
+        end tell
+        """
+        var error: NSDictionary?
+        guard let script = NSAppleScript(source: source) else {
+            throw NSError(domain: "MailMemo", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not prepare Apple Mail account discovery."])
+        }
+        let result = script.executeAndReturnError(&error)
+        if let error {
+            throw NSError(domain: "MailMemo", code: error[NSAppleScript.errorNumber] as? Int ?? 1,
+                          userInfo: [NSLocalizedDescriptionKey: error[NSAppleScript.errorMessage] as? String ?? "Approve Office Hub in System Settings → Privacy & Security → Automation → Mail."])
+        }
+        guard result.numberOfItems > 0 else { return [] }
+        return Array(Set((1...result.numberOfItems).compactMap { result.atIndex($0)?.stringValue }
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { $0.contains("@") })).sorted()
+    }
+
     static var addresses: [String] {
         guard let data = try? Data(contentsOf: root.appendingPathComponent("accounts.json")),
               let values = try? JSONDecoder().decode([String].self, from: data),

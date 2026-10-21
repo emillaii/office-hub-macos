@@ -6,7 +6,7 @@ import OfficeHubPluginKit
     override init() { super.init() }
     private var store: Store?
     private var context: OfficeHubContext?
-    var statusSummary: String { store?.isBusy == true ? "Checking inboxes…" : store?.settings.enabled == true ? "Schedule enabled · HKT" : "Automatic checks paused" }
+    var statusSummary: String { store?.hasAccounts != true ? "Setup needed · no mail accounts" : store?.isBusy == true ? "Checking inboxes…" : store?.settings.enabled == true ? "Schedule enabled · HKT" : "Automatic checks paused" }
 
     func activate(context: OfficeHubContext) throws -> NSViewController {
         self.context = context

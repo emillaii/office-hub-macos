@@ -33,6 +33,21 @@ struct TerminalView: View {
                 Rectangle().fill(p.border).frame(height: 1)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 22) {
+                        if let message = store.setupMessage {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(message).foregroundStyle(p.warning)
+                                HStack {
+                                    Button(store.discoveringAccounts ? "Reading accounts…" : "Use Apple Mail accounts", action: store.useAppleMailAccounts)
+                                        .buttonStyle(ConsoleButtonStyle(palette: p, primary: true)).disabled(store.isBusy)
+                                    if store.hasAccounts {
+                                        Button("Connect & check", action: store.connectMail)
+                                            .buttonStyle(ConsoleButtonStyle(palette: p)).disabled(store.isBusy)
+                                    }
+                                    Button("Edit accounts") { page = 2 }.buttonStyle(ConsoleButtonStyle(palette: p))
+                                }
+                            }.padding(18).frame(maxWidth: .infinity, alignment: .leading).background(p.panel)
+                        }
+                        if !store.notice.isEmpty { Text(store.notice).foregroundStyle(p.muted).textSelection(.enabled) }
                         pageHeading
                         if page == 0 { overview }
                         else if page == 1 { attentionPage }
@@ -209,6 +224,12 @@ struct TerminalView: View {
                     TextEditor(text: $store.accountText).font(.system(size: 12, design: .monospaced))
                         .scrollContentBackground(.hidden).frame(height: 80).padding(8).background(p.inset)
                         .accessibilityLabel("Apple Mail email addresses")
+                    HStack {
+                        Button("Use Apple Mail accounts", action: store.useAppleMailAccounts)
+                            .buttonStyle(ConsoleButtonStyle(palette: p)).disabled(store.isBusy)
+                        Button("Connect & check", action: store.connectMail)
+                            .buttonStyle(ConsoleButtonStyle(palette: p, primary: true)).disabled(store.isBusy || !store.hasAccounts)
+                    }
                     Text("Use accounts already configured in Apple Mail. Save, then choose Connect Apple Mail below.")
                         .font(.system(size: 11, design: .monospaced)).foregroundStyle(p.muted)
                 }

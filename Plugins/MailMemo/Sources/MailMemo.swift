@@ -67,11 +67,39 @@ struct Report: Codable {
 @MainActor final class Store: ObservableObject {
     @Published var settings = Settings()
     @Published var accountText = ""
+    @Published var discoveringAccounts = false
+    var hasAccounts: Bool { !accountText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    var setupMessage: String? {
+        if !hasAccounts { return "Set up Mail Memo: choose the accounts already configured in Apple Mail." }
+        if !settings.mail_access { return "Connect Apple Mail to approve Office Hub’s access, then run your first check." }
+        return nil
+    }
+    func useAppleMailAccounts() {
+        guard !discoveringAccounts, !isBusy else { return }
+        discoveringAccounts = true
+        notice = "Reading account addresses from Apple Mail. Approve the macOS prompt if shown."
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result = Result { try MailReader.discoverAccounts() }
+            Task { @MainActor in
+                self.discoveringAccounts = false
+                switch result {
+                case .success(let addresses):
+                    guard !addresses.isEmpty else { self.notice = "Apple Mail has no email addresses configured."; return }
+                    self.accountText = addresses.joined(separator: "\n")
+                    self.settings.enabled = false
+                    self.settings.mail_access = false
+                    self.save()
+                    self.notice = "Loaded \(addresses.count) Apple Mail account(s). Choose Connect & check to start."
+                case .failure(let error): self.notice = "Could not read Apple Mail accounts: " + error.localizedDescription
+                }
+            }
+        }
+    }
     var onThemeChange: ((String) -> Void)?
     private var scheduledTimer: Timer?
     private var runnerProcess: Process?
     private var lastSaveSucceeded = true
-    var isBusy: Bool { running || collecting || runnerProcess?.isRunning == true }
+    var isBusy: Bool { discoveringAccounts || running || collecting || runnerProcess?.isRunning == true }
     @Published var report: Report?
     @Published var running = false
     @Published var permission = "Not enabled"
@@ -89,6 +117,11 @@ struct Report: Codable {
            let accounts = try? JSONDecoder().decode([String].self, from: data) { accountText = accounts.joined(separator: "\n") }
         if let data = try? Data(contentsOf: root.appendingPathComponent("settings.json")),
            let value = try? JSONDecoder().decode(Settings.self, from: data) { settings = value }
+        if MailReader.addresses.isEmpty {
+            settings.enabled = false
+            settings.mail_access = false
+            save()
+        }
         if let data = try? Data(contentsOf: runtime.appendingPathComponent("notified.json")),
            let value = try? JSONDecoder().decode([String].self, from: data) { notified = Set(value) }
         poll()
@@ -113,10 +146,11 @@ struct Report: Codable {
             }
             try JSONEncoder().encode(Array(Set(addresses)).sorted()).write(to: root.appendingPathComponent("accounts.json"), options: .atomic)
             try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: root.appendingPathComponent("accounts.json").path)
+            if addresses.isEmpty { settings.enabled = false; settings.mail_access = false }
             let data = try JSONEncoder().encode(settings)
             try data.write(to: root.appendingPathComponent("settings.json"), options: .atomic)
             lastSaveSucceeded = true
-            notice = "Saved. The schedule uses Hong Kong time."
+            notice = addresses.isEmpty ? "Add accounts or choose Use Apple Mail accounts before checking." : "Saved. The schedule uses Hong Kong time."
         } catch { notice = "Could not save: \(error.localizedDescription)" }
     }
     func selectTheme(_ theme: MemoTheme) {
@@ -166,7 +200,7 @@ struct Report: Codable {
     }
     private func startRunner(manual: Bool) {
         guard !isBusy else { return }
-        if manual && MailReader.addresses.isEmpty { notice = "Add email accounts in Preferences before checking Mail."; return }
+        if MailReader.addresses.isEmpty { notice = "Add email accounts in Preferences before checking Mail."; return }
         running = true
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
@@ -182,6 +216,12 @@ struct Report: Codable {
     }
     func connectMail() {
         // This is a user-invoked action. macOS presents its own Automation prompt.
+        guard !isBusy else { return }
+        save()
+        guard lastSaveSucceeded, !MailReader.addresses.isEmpty else {
+            notice = "Choose Use Apple Mail accounts, or add email addresses, before connecting."
+            return
+        }
         settings.mail_access = true
         pendingConnection = true
         checkNow()
@@ -209,18 +249,20 @@ struct Report: Codable {
                         self.settings.enabled = true
                         self.notice = "Apple Mail connected. Automatic checks are enabled."
                         self.save()
-                    } else { self.notice = result["detail"] as? String ?? "Mail access needs approval." }
+                    } else {
+                        self.settings.mail_access = false
+                        self.settings.enabled = false
+                        self.save()
+                        self.notice = result["detail"] as? String ?? "Mail access needs approval."
+                    }
                 }
             }
         }
     }
     func poll() {
         collectIfRequested()
-        if let data = try? Data(contentsOf: runtime.appendingPathComponent("activity.json")),
-           let value = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            let started = value["started_at"] as? Double ?? 0
-            running = value["running"] as? Bool == true && Date().timeIntervalSince1970 - started < 520
-        }
+        // This host owns every runner. A stale activity file must not keep the UI busy.
+        running = runnerProcess?.isRunning == true || collecting
         guard let data = try? Data(contentsOf: runtime.appendingPathComponent("report.json")), data != lastData,
               let value = try? JSONDecoder().decode(Report.self, from: data) else { return }
         lastData = data
