@@ -1,0 +1,105 @@
+{
+  "type": "object",
+  "properties": {
+    "complete": {
+      "type": "boolean"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "detail": {
+      "type": "string"
+    },
+    "accounts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "checked",
+              "blocked"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account",
+          "status",
+          "detail"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "string"
+          },
+          "sender": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "received_at": {
+            "type": "string"
+          },
+          "message_id": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "important": {
+            "type": "boolean"
+          },
+          "needs_reply": {
+            "type": "boolean"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "work",
+              "personal",
+              "security",
+              "school",
+              "receipt",
+              "promotion",
+              "other"
+            ]
+          }
+        },
+        "required": [
+          "account",
+          "sender",
+          "subject",
+          "received_at",
+          "message_id",
+          "summary",
+          "important",
+          "needs_reply",
+          "category"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "complete",
+    "summary",
+    "detail",
+    "accounts",
+    "messages"
+  ],
+  "additionalProperties": false
+}

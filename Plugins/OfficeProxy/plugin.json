@@ -1,0 +1,12 @@
+{
+  "id": "local.officehub.office-proxy",
+  "name": "Office Proxy",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "module": "OfficeProxyPlugin",
+  "principalClass": "OfficeHubOfficeProxyPlugin",
+  "symbol": "network",
+  "category": "NETWORK",
+  "summary": "Route selected sites through your office SSH connection.",
+  "capabilities": ["SSH connections", "Local browser proxy", "Dedicated Chrome profile"]
+}

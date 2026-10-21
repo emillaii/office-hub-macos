@@ -1,0 +1,12 @@
+{
+  "id": "local.officehub.mail-memo",
+  "name": "Mail Memo",
+  "version": "1.0.0",
+  "apiVersion": 1,
+  "module": "MailMemoPlugin",
+  "principalClass": "OfficeHubMailMemoPlugin",
+  "symbol": "envelope.badge",
+  "category": "COMMUNICATION",
+  "summary": "Read-only inbox summaries and reply reminders with Luna.",
+  "capabilities": ["Apple Mail Automation (user approved)", "Codex CLI summaries", "Notifications"]
+}
